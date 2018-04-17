@@ -4,6 +4,7 @@ import datetime
 from functools import partial
 
 import telegram
+from botanio import botan
 from emoji import emojize
 from telegram import ReplyKeyboardMarkup, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import CommandHandler, Updater, ConversationHandler, MessageHandler, Filters, RegexHandler
@@ -12,6 +13,7 @@ from CGBot.decorator import on_error, catch_exceptions
 
 logger = logging.getLogger(__name__)
 CODERGOSHA_ID = "295641973"
+BOTAN_KEY = os.getenv('BOTAN_KEY')
 users_coffee = dict()
 
 
@@ -47,6 +49,14 @@ def del_state(update, users_state):
 
 @catch_exceptions
 def start(bot, update, args):
+    utm_start = " ".join(args)
+    # utm_start = args
+    # Необходимо вколхозить статку
+    # https://telegram.me/MopedGoaBot?start=test_utm
+    message_dic = dict()
+    message_dic['source'] = utm_start
+    botan.track(token=BOTAN_KEY, uid=update.message.from_user.id, message=message_dic, name="/start")
+
     coffee = emojize(" :coffee:", use_aliases=True)
     update.message.reply_text("Привет, Я помогу Вам получить прокси. \r\n А еще я расскажу о проектах "
                               "@CoderGosha и сделаю вам кофе" + coffee,
@@ -68,6 +78,9 @@ def mainmenu(bot, update, users_state):
 
 @catch_exceptions
 def get_proxy(bot, update, users_state):
+    message_dic = dict()
+    botan.track(token=BOTAN_KEY, uid=update.message.from_user.id, message=message_dic, name="proxy")
+
     coffee = emojize(" :coffee:", use_aliases=True)
     url = "https://t.me/socks?server=188.166.32.209&port=1080&user=proxyuser&pass=6LB95AF795"
     # update.message.reply_text(_('You have questions? Write: @CoderGosha'))
@@ -83,6 +96,9 @@ def get_proxy(bot, update, users_state):
 
 @catch_exceptions
 def drink_cofee(bot, update, users_state):
+    message_dic = dict()
+    botan.track(token=BOTAN_KEY, uid=update.message.from_user.id, message=message_dic, name="coffee")
+
     coffee = emojize(" :coffee:", use_aliases=True)
     if users_coffee.get(update.message.from_user.id) is not None:
         dtT = datetime.datetime.utcnow() + datetime.timedelta(minutes=-15)
@@ -94,7 +110,9 @@ def drink_cofee(bot, update, users_state):
 
     msg = "Я написал @CoderGosha что Вы хотите выпить с ним кофе, расписание согласую позже" + coffee
     update.message.reply_text(msg)
-    link_user = '<a href="tg://user?id=' + str(update.message.from_user.id) + '"> ДРУГ</a>\r\n\r\n'
+    link_user = '<a href="tg://user?id=' + str(update.message.from_user.id) + '"> ' +\
+                str(update.message.from_user.first_name) + '</a>\r\n\r\n'
+
     bot.send_message(chat_id=CODERGOSHA_ID, text="С Вами хотят выпить кофе: " + link_user, parse_mode=telegram.ParseMode.HTML)
     users_coffee[update.message.from_user.id] = datetime.datetime.utcnow()
 
