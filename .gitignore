@@ -1,3 +1,5 @@
 /.idea
 /CGBot/__pycache__
 /venv
+/CGBot/models/__pycache__
+__pycache__

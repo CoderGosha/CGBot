@@ -1,3 +1,5 @@
 python-telegram-bot
 emoji
 botanio
+sqlalchemy
+alembic
