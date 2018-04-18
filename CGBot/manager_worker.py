@@ -133,11 +133,12 @@ def get_proxy(bot, update, db, users_state):
     botan.track(token=BOTAN_KEY, uid=update.message.from_user.id, message=message_dic, name="proxy")
 
     coffee = emojize(" :coffee:", use_aliases=True)
-    url = "https://t.me/socks?server=188.166.32.209&port=1080&user=proxyuser&pass=6LB95AF795"
+    url1 = "https://t.me/socks?server=188.166.32.209&port=1080&user=proxyuser&pass=6LB95AF795"
+    url2 = "https://t.me/socks?server=5.249.145.192&port=1080&user=proxyuser&pass=1QAZDWFWEF"
     # update.message.reply_text(_('You have questions? Write: @CoderGosha'))
-    button_list = [InlineKeyboardButton(text="Применить", url=url)]
+    button_list = [InlineKeyboardButton(text="Amsterdam", url=url1), InlineKeyboardButton(text="Italy", url=url2)]
     reply_markup = InlineKeyboardMarkup(build_menu(button_list, n_cols=2))
-    msg = "Я приготовил для вас прокси, нажмите кнопку для того что бы применить. \r\n " \
+    msg = "Я приготовил для вас пару прокси, нажмите кнопку для того что бы применить. \r\n " \
           "Не забудьте сказать спасибо @CoderGosha и угостить его кофе " + coffee
     update.message.reply_text(msg,
                               reply_markup=reply_markup)
