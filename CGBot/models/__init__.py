@@ -11,6 +11,7 @@ Base = declarative_base(cls=Base)
 
 
 from .users import Users
+from .proxy import Proxy
 
 
 def make_session_maker(url):

@@ -11,14 +11,14 @@ from telegram import ReplyKeyboardMarkup, InlineKeyboardButton, InlineKeyboardMa
 from telegram.ext import CommandHandler, Updater, ConversationHandler, MessageHandler, Filters, RegexHandler
 
 from CGBot.decorator import on_error, catch_exceptions
-from CGBot.models import Users
+from CGBot.manager_proxy import proxy_action, proxy_add, proxy_add_commit, proxy_add_url, proxy_del_list, proxy_del
+from CGBot.models import Users, Proxy
+from .state_bot import *
 
 logger = logging.getLogger(__name__)
 CODERGOSHA_ID = "295641973"
 BOTAN_KEY = os.getenv('BOTAN_KEY')
 users_coffee = dict()
-
-GET_NOTIFY, CHECK_NOTIFY = list(range(2))
 
 
 def run_worker(telegram_token, db_session_maker, use_webhook, webhook_domain='', webhook_port=''):
@@ -51,6 +51,39 @@ def run_worker(telegram_token, db_session_maker, use_webhook, webhook_domain='',
                 RegexHandler('^Ok', partial(send_notify, db_session_maker=db_session_maker,
                                                          users_state=users_state))
             ]
+        },
+        allow_reentry=True,
+        fallbacks=[RegexHandler('^Mainmenu', partial(mainmenu, users_state=users_state))]
+
+    ))
+
+    dp.add_handler(ConversationHandler(
+        entry_points=[RegexHandler('^Proxy', partial(proxy_action))],
+        states={
+            PROXY_ACTION: [
+                RegexHandler('^Mainmenu', partial(mainmenu, users_state=users_state)),
+                RegexHandler('^Add',
+                               partial(proxy_add, users_state=users_state)),
+
+                RegexHandler('^Delete', partial(proxy_del_list, db_session_maker=db_session_maker,
+                                                users_state=users_state))
+            ],
+
+
+            PROXY_GET_NAME: [
+                MessageHandler(Filters.text, partial(proxy_add_url, users_state=users_state))
+            ],
+
+            PROXY_GET_URL: [
+                MessageHandler(Filters.text, partial(proxy_add_commit, db_session_maker=db_session_maker,
+                                                     users_state=users_state))
+            ],
+
+            PROXY_DEL_LIST: [
+                MessageHandler(Filters.text, partial(proxy_del, db_session_maker=db_session_maker,
+                                                     users_state=users_state))
+            ]
+
         },
         allow_reentry=True,
         fallbacks=[RegexHandler('^Mainmenu', partial(mainmenu, users_state=users_state))]
@@ -133,10 +166,10 @@ def get_proxy(bot, update, db, users_state):
     botan.track(token=BOTAN_KEY, uid=update.message.from_user.id, message=message_dic, name="proxy")
 
     coffee = emojize(" :coffee:", use_aliases=True)
-    url1 = "https://t.me/socks?server=188.166.32.209&port=1080&user=proxyuser&pass=6LB95AF795"
-    url2 = "https://t.me/socks?server=5.249.145.192&port=1080&user=proxyuser&pass=1QAZDWFWEF"
-    # update.message.reply_text(_('You have questions? Write: @CoderGosha'))
-    button_list = [InlineKeyboardButton(text="Amsterdam", url=url1), InlineKeyboardButton(text="Italy", url=url2)]
+    button_list = []
+    for prox in db.query(Proxy).filter(Proxy.is_active).all():
+        button_list.append(InlineKeyboardButton(text=prox.name, url=prox.link))
+
     reply_markup = InlineKeyboardMarkup(build_menu(button_list, n_cols=2))
     msg = "Я приготовил для вас пару прокси, нажмите кнопку для того что бы применить. \r\n " \
           "Не забудьте сказать спасибо @CoderGosha и угостить его кофе " + coffee
@@ -256,7 +289,7 @@ def keyboard_mainmenu(user_id, notify_status):
 
     admin_button = None
     if str(user_id) == CODERGOSHA_ID:
-        admin_button = ['Notify']
+        admin_button = ['Notify', 'Proxy']
 
     keyboard = ['Прокси' + collab, 'Проекты' + project, 'Написать автору' + write, 'Выпить кофе' + coffee]
 
