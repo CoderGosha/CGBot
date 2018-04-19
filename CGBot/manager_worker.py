@@ -253,18 +253,12 @@ def keyboard_mainmenu(user_id, notify_status):
     write = emojize(" 📩", use_aliases=True)
     project = emojize(" ⚙", use_aliases=True)
     coffee = emojize(" :coffee:", use_aliases=True)
-    if notify_status:
-        ok = emojize(" :ok_hand:", use_aliases=True)
-        notify = "Уведомления: Ок" + ok
-    else:
-        off = emojize(" :no_bell:", use_aliases=True)
-        notify = "Уведомления: Off" + off
 
     admin_button = None
     if str(user_id) == CODERGOSHA_ID:
         admin_button = ['Notify']
 
-    keyboard = ['Прокси' + collab, 'Проекты' + project, 'Написать автору' + write, 'Выпить кофе' + coffee, notify]
+    keyboard = ['Прокси' + collab, 'Проекты' + project, 'Написать автору' + write, 'Выпить кофе' + coffee]
 
     return build_menu(buttons=keyboard, n_cols=2, header_buttons=None, footer_buttons=admin_button)
 
