@@ -15,7 +15,6 @@ from .state_bot import *
 
 logger = logging.getLogger(__name__)
 CODERGOSHA_ID = "295641973"
-BOTAN_KEY = os.getenv('BOTAN_KEY')
 
 
 @catch_exceptions

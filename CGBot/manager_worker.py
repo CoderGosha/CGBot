@@ -17,7 +17,6 @@ from .state_bot import *
 
 logger = logging.getLogger(__name__)
 CODERGOSHA_ID = "295641973"
-BOTAN_KEY = os.getenv('BOTAN_KEY')
 users_coffee = dict()
 
 
@@ -128,9 +127,6 @@ def start(bot, update, db, args):
     # utm_start = args
     # Необходимо вколхозить статку
     # https://telegram.me/MopedGoaBot?start=test_utm
-    message_dic = dict()
-    message_dic['source'] = utm_start
-    botan.track(token=BOTAN_KEY, uid=update.message.from_user.id, message=message_dic, name="/start")
 
     coffee = emojize(" :coffee:", use_aliases=True)
     update_user_status(db, update.message.from_user.id, True)
@@ -162,9 +158,6 @@ def mainmenu(bot, update, db, users_state):
 @make_db_session
 @catch_exceptions
 def get_proxy(bot, update, db, users_state):
-    message_dic = dict()
-    botan.track(token=BOTAN_KEY, uid=update.message.from_user.id, message=message_dic, name="proxy")
-
     coffee = emojize(" :coffee:", use_aliases=True)
     button_list = []
     for prox in db.query(Proxy).filter(Proxy.is_active).all():
@@ -257,9 +250,6 @@ def send_notify(bot, update, db, users_state):
 
 @catch_exceptions
 def drink_cofee(bot, update, users_state):
-    message_dic = dict()
-    botan.track(token=BOTAN_KEY, uid=update.message.from_user.id, message=message_dic, name="coffee")
-
     coffee = emojize(" :coffee:", use_aliases=True)
     if users_coffee.get(update.message.from_user.id) is not None:
         dtT = datetime.datetime.utcnow() + datetime.timedelta(minutes=-15)
