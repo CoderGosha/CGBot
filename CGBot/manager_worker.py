@@ -5,7 +5,7 @@ import traceback
 from functools import partial
 
 import telegram
-from botanio import botan
+from chatbase import Message
 from emoji import emojize
 from telegram import ReplyKeyboardMarkup, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import CommandHandler, Updater, ConversationHandler, MessageHandler, Filters, RegexHandler
@@ -18,6 +18,7 @@ from .state_bot import *
 logger = logging.getLogger(__name__)
 CODERGOSHA_ID = "295641973"
 users_coffee = dict()
+CHATBASE_KEY = os.getenv('CHATBASE_KEY')
 
 
 def run_worker(telegram_token, db_session_maker, use_webhook, webhook_domain='', webhook_port=''):
@@ -127,6 +128,13 @@ def start(bot, update, db, args):
     # utm_start = args
     # Необходимо вколхозить статку
     # https://telegram.me/MopedGoaBot?start=test_utm
+    msg = Message(api_key=CHATBASE_KEY,
+                  platform="telegram",
+                  version="0.1",
+                  user_id=str(update.message.from_user.id),
+                  message="Start",
+                  intent=utm_start)
+    resp = msg.send()
 
     coffee = emojize(" :coffee:", use_aliases=True)
     update_user_status(db, update.message.from_user.id, True)
@@ -143,6 +151,13 @@ def start(bot, update, db, args):
 @make_db_session
 @catch_exceptions
 def mainmenu(bot, update, db, users_state):
+    msg = Message(api_key=CHATBASE_KEY,
+                  platform="telegram",
+                  version="0.1",
+                  user_id=str(update.message.from_user.id),
+                  message=update.message.text)
+    resp = msg.send()
+
     coffee = emojize(" :coffee:", use_aliases=True)
     notify_status = user_status_notify(db, update.message.from_user.id)
     # update.message.reply_text(_('You have questions? Write: @CoderGosha'))
@@ -158,6 +173,13 @@ def mainmenu(bot, update, db, users_state):
 @make_db_session
 @catch_exceptions
 def get_proxy(bot, update, db, users_state):
+    msg = Message(api_key=CHATBASE_KEY,
+                  platform="telegram",
+                  version="0.1",
+                  user_id=str(update.message.from_user.id),
+                  message=update.message.text)
+    resp = msg.send()
+
     coffee = emojize(" :coffee:", use_aliases=True)
     button_list = []
     for prox in db.query(Proxy).filter(Proxy.is_active).all():
@@ -250,6 +272,13 @@ def send_notify(bot, update, db, users_state):
 
 @catch_exceptions
 def drink_cofee(bot, update, users_state):
+    msg = Message(api_key=CHATBASE_KEY,
+                  platform="telegram",
+                  version="0.1",
+                  user_id=str(update.message.from_user.id),
+                  message="Coffee")
+    resp = msg.send()
+
     coffee = emojize(" :coffee:", use_aliases=True)
     if users_coffee.get(update.message.from_user.id) is not None:
         dtT = datetime.datetime.utcnow() + datetime.timedelta(minutes=-15)
