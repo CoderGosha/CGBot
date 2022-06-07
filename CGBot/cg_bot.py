@@ -9,6 +9,7 @@ from aiogram.types import BotCommand
 from CGBot.handlers.coffee import register_handlers_coffee
 from CGBot.handlers.common import register_handlers_common
 from CGBot.handlers.vpn import register_handlers_vpn
+from CGBot.services.database_service import DBService
 
 logger = logging.getLogger(__name__)
 
@@ -18,6 +19,7 @@ class CGBot:
         self.bot = Bot(token=token)
         self.dp = Dispatcher(self.bot, storage=MemoryStorage())
         self.__registration__()
+        DBService.init_db()
 
     def __registration__(self):
         register_handlers_common(self.dp)

@@ -1,11 +1,14 @@
 
 
-from aiogram import Dispatcher, types
-from aiogram.dispatcher import FSMContext
+from aiogram import Dispatcher, types, Bot
+from aiogram.dispatcher import FSMContext, filters
 from aiogram.dispatcher.filters import Text
 from aiogram.dispatcher.filters.state import StatesGroup, State
 
+from CGBot.const import ADMIN_ID
 from CGBot.handlers.common import cmd_cancel, get_main_keyboard
+from CGBot.models.vpn import VPNUserState
+from CGBot.services.database_service import DBService
 
 
 class VPNStates(StatesGroup):
@@ -14,6 +17,21 @@ class VPNStates(StatesGroup):
 
 
 async def vpn_start(message: types.Message):
+    state_request = DBService.check_vpn_state(message.from_user.id)
+
+    if state_request == VPNUserState.Request:
+        await message.answer("Ваш запрос уже отправлен. Ожидайте")
+        return
+
+    if state_request == VPNUserState.Blocked:
+        await message.answer("Ваш запрос был заблокирован. Извините")
+        return
+
+    if state_request == VPNUserState.Ready:
+        link = DBService.vpn_get_link(message.from_user.id)
+        await message.answer(f"Ваша ссылка на впн: \n {link}")
+        return
+
     keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
     keyboard.add("Продолжить")
     keyboard.add("Отмена")
@@ -21,10 +39,47 @@ async def vpn_start(message: types.Message):
     await VPNStates.waiting_for_request.set()
 
 
+def get_user_name(from_user) -> str:
+    if from_user.username is not None:
+        return from_user.username
+
+    if from_user.full_name is not None:
+        return from_user.full_name.replace(" ", "_") + from_user.id
+
+    return from_user.id
+
+
 async def vpn_request(message: types.Message, state: FSMContext):
+    DBService.vpn_request(message.from_user.id, name=get_user_name(message.from_user))
+    await send_request_to_admin(message)
     await state.finish()
     await message.answer("Ваш запрос отправлен на модерацию. В ближайшее время вам вышлют данные для подключения",
                          reply_markup=get_main_keyboard())
+
+
+async def vpn_accept(message: types.Message, state: FSMContext):
+    if message.from_user.id != ADMIN_ID:
+        return
+    client_id = message.text.replace("/vpn_accept_", "")
+    link = "test"
+
+    DBService.vpn_accept(message.from_user.id, link)
+    msg = "Ваш VPN: " \
+          f"\n {link}"
+
+    await message.bot.send_message(chat_id=ADMIN_ID, text="Ready")
+    await message.bot.send_message(chat_id=client_id, text=msg)
+
+
+async def send_request_to_admin(message: types.Message):
+    msg = f"Новый запрос на VPN" \
+          f"\n User id: {message.from_user.id}" \
+          f"\n {message.from_user.full_name}"
+
+    if message.from_user.username is not None:
+        msg += f"\n @{message.from_user.username}"
+    msg += f"\n\n/vpn_accept_{message.from_user.id}"
+    await message.bot.send_message(chat_id=ADMIN_ID, text=msg)
 
 
 def register_handlers_vpn(dp: Dispatcher):
@@ -33,3 +88,5 @@ def register_handlers_vpn(dp: Dispatcher):
     dp.register_message_handler(vpn_request, Text(equals="продолжить", ignore_case=True),
                                 state=VPNStates.waiting_for_request)
     dp.register_message_handler(cmd_cancel, state=VPNStates.waiting_for_request)
+    dp.register_message_handler(vpn_accept, filters.RegexpCommandsFilter(regexp_commands=['vpn_accept_([0-9]*)']),
+                                state="*")

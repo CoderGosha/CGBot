@@ -6,8 +6,10 @@ from emoji import emojize
 
 def get_main_keyboard():
     keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    coffee = emojize(" :coffee:", use_aliases=True)
     keyboard.add("VPN")
-    keyboard.add("Coffee")
+    keyboard.add(f"{coffee} Coffee")
+    keyboard.add("About ")
     return keyboard
 
 
@@ -33,3 +35,4 @@ def register_handlers_common(dp: Dispatcher):
     dp.register_message_handler(cmd_start, commands="start", state="*")
     dp.register_message_handler(cmd_cancel, commands="cancel", state="*")
     dp.register_message_handler(cmd_cancel,  Text(equals="отмена", ignore_case=True), state="*")
+    dp.register_message_handler(cmd_start, Text(equals="about", ignore_case=True), state="*")

@@ -11,4 +11,5 @@ async def coffee_start(message: types.Message):
 
 def register_handlers_coffee(dp: Dispatcher):
     dp.register_message_handler(coffee_start, commands="coffee", state="*")
-    dp.register_message_handler(coffee_start, Text(equals="coffee", ignore_case=True), state="*")
+    dp.register_message_handler(coffee_start, Text(endswith=f"coffee", ignore_case=True), state="*")
+

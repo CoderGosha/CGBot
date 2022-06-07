@@ -6,7 +6,6 @@ from CGBot.cg_bot import CGBot
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
-    db_url = os.getenv('DATABASE_URL', 'sqlite:///share/cgbot.sqlite')
     telegram_token = os.getenv('TELEGRAM_TOKEN')
     use_webhook = bool(int(os.getenv('USE_WEBHOOK', False)))
     webhook_domain = os.getenv('WEBHOOK_DOMAIN', '127.0.0.1')
