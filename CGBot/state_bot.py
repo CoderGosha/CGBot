@@ -1,4 +1,0 @@
-# -*- coding: utf-8 -*-
-
-GET_NOTIFY, CHECK_NOTIFY, PROXY_ACTION, PROXY_GET_NAME, PROXY_GET_URL, PROXY_DEL_LIST = list(range(6))
-

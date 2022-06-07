@@ -1,5 +1,3 @@
-python-telegram-bot
+aiogram
 emoji
-chatbase
 sqlalchemy
-alembic

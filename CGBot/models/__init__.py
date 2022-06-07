@@ -11,7 +11,7 @@ Base = declarative_base(cls=Base)
 
 
 from .users import Users
-from .proxy import Proxy
+from .vpn import VPN
 
 
 def make_session_maker(url):
