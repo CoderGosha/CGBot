@@ -36,8 +36,7 @@ class CGBot:
         commands = [
             BotCommand(command="/start", description="Начать ботить с ботом"),
             BotCommand(command="/vpn", description="Запросить VPN"),
-            BotCommand(command="/coffee", description="Позвать на кофе"),
-            BotCommand(command="/cancel", description="Отменить")
+            BotCommand(command="/coffee", description="Позвать на кофе")
         ]
         await self.bot.set_my_commands(commands)
 

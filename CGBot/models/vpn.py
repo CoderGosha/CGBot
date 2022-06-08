@@ -19,7 +19,8 @@ class VPN(Base):
     vpn_id = Column(Integer, primary_key=True, nullable=False)
     user_id = Column(Integer)
     name = Column(String(30))
-    link = Column(String(500))
+    vpn_url = Column(String(500))
+    vpn_uid = Column(String(30))
     state = Column(sqlalchemy.Enum(VPNUserState))
 
 

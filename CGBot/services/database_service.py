@@ -4,12 +4,13 @@ from typing import Optional
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import sessionmaker, Session
 
+from CGBot.const import DEFAULT_DATABASE
 from CGBot.models import Base, VPN
 from CGBot.models.vpn import VPNUserState
 
 
 class DBService:
-    db_url = os.getenv('DATABASE_URL', 'sqlite:///share/cgbot.sqlite')
+    db_url = os.getenv('DATABASE_URL', DEFAULT_DATABASE)
     engine = create_engine(db_url)
 
     @staticmethod
@@ -35,11 +36,12 @@ class DBService:
             session.commit()
 
     @staticmethod
-    def vpn_accept(user_id, link):
+    def vpn_accept(user_id, id, url):
         with Session(DBService.engine) as session:
             vpn = session.execute(select(VPN).filter_by(user_id=user_id)).scalar_one()
             vpn.state = VPNUserState.Ready
-            vpn.link = link
+            vpn.vpn_url = url
+            vpn.vpn_uid = id
             session.commit()
 
 
@@ -51,4 +53,14 @@ class DBService:
         if result is None:
             return None
 
-        return result.link
+        return result.vpn_url
+
+    @staticmethod
+    def vpn_name_by_user_id(user_id) -> Optional[str]:
+        session = Session(DBService.engine, future=True)
+        statement = select(VPN).filter_by(user_id=user_id)
+        result = session.execute(statement).scalars().first()
+        if result is None:
+            return None
+
+        return result.name

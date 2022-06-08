@@ -1,14 +1,13 @@
-
-
 from aiogram import Dispatcher, types, Bot
 from aiogram.dispatcher import FSMContext, filters
 from aiogram.dispatcher.filters import Text
 from aiogram.dispatcher.filters.state import StatesGroup, State
 
-from CGBot.const import ADMIN_ID
+from CGBot.const import ADMIN_ID, BASE_VPN_INSTALL
 from CGBot.handlers.common import cmd_cancel, get_main_keyboard
 from CGBot.models.vpn import VPNUserState
 from CGBot.services.database_service import DBService
+from CGBot.services.outline_service import OutlineService
 
 
 class VPNStates(StatesGroup):
@@ -28,8 +27,11 @@ async def vpn_start(message: types.Message):
         return
 
     if state_request == VPNUserState.Ready:
-        link = DBService.vpn_get_link(message.from_user.id)
-        await message.answer(f"Ваша ссылка на впн: \n {link}")
+        url = DBService.vpn_get_link(message.from_user.id)
+        msg = "Ваш VPN: " \
+              f"\n\nКлюч:\n {url}" \
+              f"\n\nУстановка:\n {BASE_VPN_INSTALL}{url}"
+        await message.answer(msg)
         return
 
     keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
@@ -61,11 +63,18 @@ async def vpn_accept(message: types.Message, state: FSMContext):
     if message.from_user.id != ADMIN_ID:
         return
     client_id = message.text.replace("/vpn_accept_", "")
-    link = "test"
+    state = DBService.check_vpn_state(user_id=message.from_user.id)
+    if state != VPNUserState.Request:
+        await message.bot.send_message(chat_id=ADMIN_ID, text="VPN был подтвержден")
+        return
 
-    DBService.vpn_accept(message.from_user.id, link)
+    name = DBService.vpn_name_by_user_id(user_id=message.from_user.id)
+    id, url = OutlineService.create_vpn_user(name=name)
+
+    DBService.vpn_accept(message.from_user.id, id, url)
     msg = "Ваш VPN: " \
-          f"\n {link}"
+          f"\n\nКлюч:\n {url}" \
+          f"\n\nУстановка:\n {BASE_VPN_INSTALL}{url}"
 
     await message.bot.send_message(chat_id=ADMIN_ID, text="Ready")
     await message.bot.send_message(chat_id=client_id, text=msg)
