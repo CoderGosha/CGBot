@@ -63,15 +63,15 @@ async def vpn_accept(message: types.Message, state: FSMContext):
     if message.from_user.id != ADMIN_ID:
         return
     client_id = message.text.replace("/vpn_accept_", "")
-    state = DBService.check_vpn_state(user_id=message.from_user.id)
+    state = DBService.check_vpn_state(user_id=client_id)
     if state != VPNUserState.Request:
         await message.bot.send_message(chat_id=ADMIN_ID, text="VPN был подтвержден")
         return
 
-    name = DBService.vpn_name_by_user_id(user_id=message.from_user.id)
+    name = DBService.vpn_name_by_user_id(user_id=client_id)
     id, url = OutlineService.create_vpn_user(name=name)
 
-    DBService.vpn_accept(message.from_user.id, id, url)
+    DBService.vpn_accept(client_id, id, url)
     msg = "Ваш VPN: " \
           f"\n\nКлюч:\n {url}" \
           f"\n\nУстановка:\n {BASE_VPN_INSTALL}{url}"
