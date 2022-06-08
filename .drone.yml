@@ -1,0 +1,27 @@
+kind: pipeline
+type: exec
+name: CGBot
+
+platform:
+  os: linux
+  arch: amd64
+
+steps:
+- name: build
+  commands:
+  - docker build -t cgbot .;
+
+- name: delete old containers
+  failure: ignore
+  commands:
+  - docker stop cgbot;
+  - docker rm cgbot;
+
+- name: publish
+  environment:
+    TELEGRAM_TOKEN:
+      from_secret: TELEGRAM_TOKEN
+    VPN_URL:
+      from_secret: VPN_URL
+  commands:
+  - docker run -d -v /opt/cgbot/share:/app/share/ --restart=no -m=350m --memory-swap=350m --cpus=".5" --pids-limit=200 -e=VPN_URL=$VPN_URL -e=TELEGRAM_TOKEN=$TELEGRAM_TOKEN --name cgbot cgbot;

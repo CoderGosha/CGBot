@@ -93,7 +93,7 @@ async def send_request_to_admin(message: types.Message):
 
 def register_handlers_vpn(dp: Dispatcher):
     dp.register_message_handler(vpn_start, commands="vpn", state="*")
-    dp.register_message_handler(vpn_start, Text(equals="vpn", ignore_case=True), state="*")
+    dp.register_message_handler(vpn_start, Text(endswith="vpn", ignore_case=True), state="*")
     dp.register_message_handler(vpn_request, Text(equals="продолжить", ignore_case=True),
                                 state=VPNStates.waiting_for_request)
     dp.register_message_handler(cmd_cancel, state=VPNStates.waiting_for_request)
