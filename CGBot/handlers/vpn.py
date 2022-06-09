@@ -5,7 +5,7 @@ from aiogram.dispatcher import FSMContext, filters
 from aiogram.dispatcher.filters import Text
 from aiogram.dispatcher.filters.state import StatesGroup, State
 
-from CGBot.const import ADMIN_ID, BASE_VPN_INSTALL
+from CGBot.const import ADMIN_ID, BASE_VPN_INSTALL, DEFAULT_TRAFFIC
 from CGBot.handlers.common import cmd_cancel, get_main_keyboard
 from CGBot.models.vpn import VPNUserState
 from CGBot.services.database_service import DBService
@@ -16,6 +16,24 @@ from hurry.filesize import size
 class VPNStates(StatesGroup):
     waiting_for_request = State()
     # waiting_for_food_size = State()
+
+
+def get_message_static(user_id) -> str:
+    vpn = DBService.vpn_by_user_id(user_id)
+    used_traffic = OutlineService.get_statistics_by_vpn_id(vpn.vpn_uid)
+    available_traffic = "-"
+    if used_traffic is not None:
+        available = DEFAULT_TRAFFIC - used_traffic
+        if available < 0:
+            available = 0
+        available_traffic = size(available)
+
+    msg = "Ваш VPN: " \
+          f"\n\nДоступный трафик:\n {available_traffic} из {size(DEFAULT_TRAFFIC)} в месяц" \
+          f"\n\nКлюч:\n {vpn.vpn_url}" \
+          f"\n\nУстановка:\n {BASE_VPN_INSTALL}{vpn.vpn_url}"
+
+    return msg
 
 
 async def vpn_start(message: types.Message):
@@ -30,10 +48,7 @@ async def vpn_start(message: types.Message):
         return
 
     if state_request == VPNUserState.Ready:
-        url = DBService.vpn_get_link(message.from_user.id)
-        msg = "Ваш VPN: " \
-              f"\n\nКлюч:\n {url}" \
-              f"\n\nУстановка:\n {BASE_VPN_INSTALL}{url}"
+        msg = get_message_static(message.from_user.id)
         await message.answer(msg)
         return
 
@@ -110,9 +125,7 @@ async def vpn_accept(message: types.Message, state: FSMContext):
     id, url = OutlineService.create_vpn_user(name=vpn.vpn_name)
 
     DBService.vpn_accept(client_id, id, url)
-    msg = "Ваш VPN: " \
-          f"\n\nКлюч:\n {url}" \
-          f"\n\nУстановка:\n {BASE_VPN_INSTALL}{url}"
+    msg = get_message_static(user_id=client_id)
 
     await message.bot.send_message(chat_id=ADMIN_ID, text="Ready")
     await message.bot.send_message(chat_id=client_id, text=msg)
