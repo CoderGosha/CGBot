@@ -6,7 +6,7 @@ from CGBot.handlers.common import get_main_keyboard
 
 async def coffee_start(message: types.Message):
 
-    await message.answer("Сегодня было слишком много кофе...", reply_markup=get_main_keyboard())
+    await message.answer("Сегодня было слишком много кофе...", reply_markup=get_main_keyboard(message.from_user.id))
 
 
 def register_handlers_coffee(dp: Dispatcher):
