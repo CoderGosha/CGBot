@@ -162,9 +162,9 @@ async def vpn_static(message: types.Message, state: FSMContext):
     for key, value in vpn_statistics.items():
         if key in vpn_user_dict:
             vpn = vpn_user_dict[key]
-            msg = f"\n{vpn.user_info}" \
-                  f"\n Traffic: {size(value)}"
-            msg += "\n\n"
+            msg += f"\n{vpn.user_info}" \
+                   f"\n Traffic: {size(value)}"
+            msg += "\n"
             count_stat += 1
             if count_stat > 10:
                 continue
@@ -186,14 +186,14 @@ async def block_list_user(message: types.Message, state: FSMContext):
     msg = "Список пользователей: "
     for user in vpn_user:
         msg += f"\n{user.user_info}" \
-              f"\n Status: {user.state}"
+               f"\n Status: {user.state}"
 
         msg += f"\n\n /delete_{user.user_id}"
         if user.state == VPNUserState.Blocked:
             msg += f"\n\n /unblock_{user.user_id}"
         else:
             msg += f"\n\n /block_{user.user_id}"
-        msg += "\n\n"
+        msg += "\n"
 
     await message.bot.send_message(chat_id=ADMIN_ID, text=msg)
     await VPNStates.block_list_user.set()
