@@ -1,3 +1,5 @@
+import logging
+
 from aiogram import Dispatcher, types, Bot
 from aiogram.dispatcher import FSMContext, filters
 from aiogram.dispatcher.filters import Text
@@ -51,12 +53,44 @@ def get_user_name(from_user) -> str:
     return from_user.id
 
 
+def get_user_info(from_user) -> str:
+    msg = f"\n User id: {from_user.id}" \
+          f"\n {from_user.full_name}"
+
+    if from_user.username is not None:
+        msg += f"\n @{from_user.username}"
+
+    return msg
+
+
 async def vpn_request(message: types.Message, state: FSMContext):
-    DBService.vpn_request(message.from_user.id, name=get_user_name(message.from_user))
-    await send_request_to_admin(message)
+    user_info = get_user_info(message.from_user)
+    DBService.vpn_request(message.from_user.id, name=get_user_name(message.from_user),
+                          user_info=user_info)
+    await send_request_to_admin(message, user_info)
     await state.finish()
     await message.answer("Ваш запрос отправлен на модерацию. В ближайшее время вам вышлют данные для подключения",
-                         reply_markup=get_main_keyboard())
+                         reply_markup=get_main_keyboard(message.from_user.id))
+
+
+async def vpn_get_requests(message: types.Message, state: FSMContext):
+    if message.from_user.id != ADMIN_ID:
+        return
+
+    await state.finish()
+    vpn_requests = DBService.vpn_active_request()
+    if vpn_requests is None or vpn_requests == []:
+        await message.answer("Нет активных заявок")
+        return
+
+    msg = ""
+    for r in vpn_requests:
+        msg = f"Новый запрос на VPN" \
+              f"\n{r.user_info}"
+        msg += f"\n\n/vpn_accept_{r.user_id}"
+        msg += "\n\n"
+
+    await message.answer(msg)
 
 
 async def vpn_accept(message: types.Message, state: FSMContext):
@@ -68,8 +102,11 @@ async def vpn_accept(message: types.Message, state: FSMContext):
         await message.bot.send_message(chat_id=ADMIN_ID, text="VPN был подтвержден")
         return
 
-    name = DBService.vpn_name_by_user_id(user_id=client_id)
-    id, url = OutlineService.create_vpn_user(name=name)
+    vpn = DBService.vpn_by_user_id(user_id=client_id)
+    if vpn is None:
+        logging.error(f"Didn't found profile by user id: {client_id}")
+        return
+    id, url = OutlineService.create_vpn_user(name=vpn.vpn_name)
 
     DBService.vpn_accept(client_id, id, url)
     msg = "Ваш VPN: " \
@@ -80,13 +117,9 @@ async def vpn_accept(message: types.Message, state: FSMContext):
     await message.bot.send_message(chat_id=client_id, text=msg)
 
 
-async def send_request_to_admin(message: types.Message):
+async def send_request_to_admin(message: types.Message, user_info):
     msg = f"Новый запрос на VPN" \
-          f"\n User id: {message.from_user.id}" \
-          f"\n {message.from_user.full_name}"
-
-    if message.from_user.username is not None:
-        msg += f"\n @{message.from_user.username}"
+          f"\n{user_info}"
     msg += f"\n\n/vpn_accept_{message.from_user.id}"
     await message.bot.send_message(chat_id=ADMIN_ID, text=msg)
 
@@ -96,6 +129,7 @@ def register_handlers_vpn(dp: Dispatcher):
     dp.register_message_handler(vpn_start, Text(endswith="vpn", ignore_case=True), state="*")
     dp.register_message_handler(vpn_request, Text(equals="продолжить", ignore_case=True),
                                 state=VPNStates.waiting_for_request)
+    dp.register_message_handler(vpn_get_requests, Text(endswith="заявки", ignore_case=True), state="*")
     dp.register_message_handler(cmd_cancel, state=VPNStates.waiting_for_request)
     dp.register_message_handler(vpn_accept, filters.RegexpCommandsFilter(regexp_commands=['vpn_accept_([0-9]*)']),
                                 state="*")
