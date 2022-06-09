@@ -185,7 +185,7 @@ async def block_list_user(message: types.Message, state: FSMContext):
 
     msg = "Список пользователей: "
     for user in vpn_user:
-        msg = f"\n{user.user_info}" \
+        msg += f"\n{user.user_info}" \
               f"\n Status: {user.state}"
 
         msg += f"\n\n /delete_{user.user_id}"
