@@ -164,7 +164,6 @@ async def vpn_static(message: types.Message, state: FSMContext):
             vpn = vpn_user_dict[key]
             msg += f"\n{vpn.user_info}" \
                    f"\n Traffic: {size(value)}"
-            msg += "\n"
             count_stat += 1
             if count_stat > 10:
                 continue
@@ -193,7 +192,6 @@ async def block_list_user(message: types.Message, state: FSMContext):
             msg += f"\n\n /unblock_{user.user_id}"
         else:
             msg += f"\n\n /block_{user.user_id}"
-        msg += "\n"
 
     await message.bot.send_message(chat_id=ADMIN_ID, text=msg)
     await VPNStates.block_list_user.set()
@@ -213,7 +211,6 @@ async def vpn_pre_delete(message: types.Message, state: FSMContext):
           f"\nДля подтверждения: "
 
     msg += f"\n\n /full_delete_{vpn.user_id}"
-    msg += "\n\n"
 
     await message.bot.send_message(chat_id=ADMIN_ID, text=msg)
     await VPNStates.block_delete_vpn.set()
