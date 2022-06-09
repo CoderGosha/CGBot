@@ -84,3 +84,9 @@ class DBService:
             return None
 
         return result
+
+    @staticmethod
+    def vpn_delete(user_id):
+        with Session(DBService.engine) as session:
+            session.query(VPN).filter(VPN.user_id == user_id).delete()
+            session.commit()

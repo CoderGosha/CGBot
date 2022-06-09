@@ -15,6 +15,10 @@ from hurry.filesize import size
 
 class VPNStates(StatesGroup):
     waiting_for_request = State()
+    block_choice_type = State()
+    block_delete_vpn = State()
+    block_black_list_vpn = State()
+    block_list_user = State()
     # waiting_for_food_size = State()
 
 
@@ -170,6 +174,65 @@ async def vpn_static(message: types.Message, state: FSMContext):
         await message.answer("Нет доступной статистики")
 
 
+async def block_list_user(message: types.Message, state: FSMContext):
+    if message.from_user.id != ADMIN_ID:
+        return
+
+    vpn_user = DBService.vpn_get_all_users()
+    if vpn_user is None or vpn_user is []:
+        await message.answer("Нет доступной статистики")
+        return
+
+    msg = "Список пользователей: "
+    for user in vpn_user:
+        msg = f"\n{user.user_info}" \
+              f"\n Status: {user.state}"
+
+        msg += f"\n\n /delete_{user.user_id}"
+        if user.state == VPNUserState.Blocked:
+            msg += f"\n\n /unblock_{user.user_id}"
+        else:
+            msg += f"\n\n /block_{user.user_id}"
+        msg += "\n\n"
+
+    await message.bot.send_message(chat_id=ADMIN_ID, text=msg)
+    await VPNStates.block_list_user.set()
+
+
+async def vpn_pre_delete(message: types.Message, state: FSMContext):
+    if message.from_user.id != ADMIN_ID:
+        return
+    client_id = message.text.replace("/delete_", "")
+    vpn = DBService.vpn_by_user_id(user_id=client_id)
+    if vpn is None:
+        logging.error(f"Didn't found profile by user id: {client_id}")
+        return
+
+    msg = f"\n{vpn.user_info}" \
+          f"\n Status: {vpn.state}" \
+          f"\nДля подтверждения: "
+
+    msg += f"\n\n /full_delete_{vpn.user_id}"
+    msg += "\n\n"
+
+    await message.bot.send_message(chat_id=ADMIN_ID, text=msg)
+    await VPNStates.block_delete_vpn.set()
+
+
+async def vpn_delete(message: types.Message, state: FSMContext):
+    if message.from_user.id != ADMIN_ID:
+        return
+    await state.finish()
+    client_id = message.text.replace("/full_delete_", "")
+    vpn = DBService.vpn_by_user_id(user_id=client_id)
+    if vpn is None:
+        logging.error(f"Didn't found profile by user id: {client_id}")
+        return
+    OutlineService.delete_vpn_user(vpn.vpn_uid)
+    DBService.vpn_delete(user_id=client_id)
+    await message.bot.send_message(chat_id=ADMIN_ID, text='Ready')
+
+
 def register_handlers_vpn(dp: Dispatcher):
     dp.register_message_handler(vpn_start, commands="vpn", state="*")
     dp.register_message_handler(vpn_start, Text(endswith="vpn", ignore_case=True), state="*")
@@ -177,6 +240,11 @@ def register_handlers_vpn(dp: Dispatcher):
                                 state=VPNStates.waiting_for_request)
     dp.register_message_handler(vpn_get_requests, Text(endswith="заявки", ignore_case=True), state="*")
     dp.register_message_handler(vpn_static, Text(endswith="статистика", ignore_case=True), state="*")
+    dp.register_message_handler(block_list_user, Text(endswith="блокировка", ignore_case=True), state="*")
     dp.register_message_handler(cmd_cancel, state=VPNStates.waiting_for_request)
     dp.register_message_handler(vpn_accept, filters.RegexpCommandsFilter(regexp_commands=['vpn_accept_([0-9]*)']),
                                 state="*")
+    dp.register_message_handler(vpn_pre_delete, filters.RegexpCommandsFilter(regexp_commands=['delete_([0-9]*)']),
+                                state=VPNStates.block_list_user)
+    dp.register_message_handler(vpn_delete, filters.RegexpCommandsFilter(regexp_commands=['full_delete_([0-9]*)']),
+                                state=VPNStates.block_delete_vpn)

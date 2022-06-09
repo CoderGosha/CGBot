@@ -9,6 +9,7 @@ from CGBot.const import DEFAULT_TRAFFIC
 
 class OutlineService:
     api_url = os.getenv('VPN_URL')
+
     @staticmethod
     def create_vpn_user(name: str) -> (str, str):
         id, url = None, None
@@ -70,3 +71,7 @@ class OutlineService:
             return statistics[str(vpn_id)]
         return None
 
+    @staticmethod
+    def delete_vpn_user(vpn_uid) -> bool:
+        response = requests.delete(f"{OutlineService.api_url}/access-keys/{vpn_uid}", verify=False)
+        return response.status_code == 204
