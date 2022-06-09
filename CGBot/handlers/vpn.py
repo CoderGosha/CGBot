@@ -138,7 +138,7 @@ async def vpn_static(message: types.Message, state: FSMContext):
     vpn_statistics = {k: v for k, v in sorted(vpn_statistics.items(), key=lambda item: item[1], reverse=True)}
     vpn_user = DBService.vpn_get_all_users()
     vpn_user_dict = {str(x.vpn_uid): x for x in vpn_user}
-    is_stat = False
+    count_stat = 0
     msg = "Статистика\nТОП 10\n"
     for key, value in vpn_statistics.items():
         if key in vpn_user_dict:
@@ -146,8 +146,10 @@ async def vpn_static(message: types.Message, state: FSMContext):
             msg = f"\n{vpn.user_info}" \
                   f"\n Traffic: {size(value)}"
             msg += "\n\n"
-            is_stat = True
-    if is_stat:
+            count_stat += 1
+            if count_stat > 10:
+                continue
+    if count_stat > 0:
         await message.answer(msg)
     else:
         await message.answer("Нет доступной статистики")
