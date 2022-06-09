@@ -27,6 +27,8 @@ def get_message_static(user_id) -> str:
         if available < 0:
             available = 0
         available_traffic = size(available)
+    else:
+        available_traffic = size(DEFAULT_TRAFFIC)
 
     msg = "Ваш VPN: " \
           f"\n\nДоступный трафик:\n {available_traffic} из {size(DEFAULT_TRAFFIC)} в месяц" \
