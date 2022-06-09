@@ -1,5 +1,6 @@
 import logging
 import os
+from typing import Optional
 
 import requests
 
@@ -28,3 +29,18 @@ class OutlineService:
         else:
             logging.info(f"Create VPN trouble code: {response.status_code}, e: {response.text}")
         return id, url
+
+    @staticmethod
+    def get_statistics() -> Optional[dict[int, int]]:
+        response = requests.get(f"{OutlineService.api_url}/metrics/transfer", verify=False)
+        if (
+                response.status_code >= 400
+                or "bytesTransferredByUserId" not in response.json()
+        ):
+            raise Exception("Unable to get metrics")
+
+        data = response.json()
+        if 'bytesTransferredByUserId' not in data:
+            return None
+        return data['bytesTransferredByUserId']
+

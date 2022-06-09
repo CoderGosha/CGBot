@@ -2,3 +2,4 @@ aiogram
 emoji
 sqlalchemy
 requests
+hurry-filesize

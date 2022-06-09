@@ -10,6 +10,7 @@ from CGBot.handlers.common import cmd_cancel, get_main_keyboard
 from CGBot.models.vpn import VPNUserState
 from CGBot.services.database_service import DBService
 from CGBot.services.outline_service import OutlineService
+from hurry.filesize import size
 
 
 class VPNStates(StatesGroup):
@@ -124,12 +125,41 @@ async def send_request_to_admin(message: types.Message, user_info):
     await message.bot.send_message(chat_id=ADMIN_ID, text=msg)
 
 
+async def vpn_static(message: types.Message, state: FSMContext):
+    if message.from_user.id != ADMIN_ID:
+        return
+
+    await state.finish()
+    vpn_statistics = OutlineService.get_statistics()
+    if vpn_statistics is None or vpn_statistics == []:
+        await message.answer("Нет активной статистики")
+        return
+
+    vpn_statistics = {k: v for k, v in sorted(vpn_statistics.items(), key=lambda item: item[1], reverse=True)}
+    vpn_user = DBService.vpn_get_all_users()
+    vpn_user_dict = {str(x.vpn_uid): x for x in vpn_user}
+    is_stat = False
+    msg = "Статистика\nТОП 10\n"
+    for key, value in vpn_statistics.items():
+        if key in vpn_user_dict:
+            vpn = vpn_user_dict[key]
+            msg = f"\n{vpn.user_info}" \
+                  f"\n Traffic: {size(value)}"
+            msg += "\n\n"
+            is_stat = True
+    if is_stat:
+        await message.answer(msg)
+    else:
+        await message.answer("Нет доступной статистики")
+
+
 def register_handlers_vpn(dp: Dispatcher):
     dp.register_message_handler(vpn_start, commands="vpn", state="*")
     dp.register_message_handler(vpn_start, Text(endswith="vpn", ignore_case=True), state="*")
     dp.register_message_handler(vpn_request, Text(equals="продолжить", ignore_case=True),
                                 state=VPNStates.waiting_for_request)
     dp.register_message_handler(vpn_get_requests, Text(endswith="заявки", ignore_case=True), state="*")
+    dp.register_message_handler(vpn_static, Text(endswith="статистика", ignore_case=True), state="*")
     dp.register_message_handler(cmd_cancel, state=VPNStates.waiting_for_request)
     dp.register_message_handler(vpn_accept, filters.RegexpCommandsFilter(regexp_commands=['vpn_accept_([0-9]*)']),
                                 state="*")

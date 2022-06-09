@@ -74,3 +74,13 @@ class DBService:
             return None
 
         return result
+
+    @staticmethod
+    def vpn_get_all_users() -> Optional[List[VPN]]:
+        session = Session(DBService.engine, future=True)
+        statement = select(VPN)
+        result = session.execute(statement).scalars().all()
+        if result is None:
+            return None
+
+        return result
