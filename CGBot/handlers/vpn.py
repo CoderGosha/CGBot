@@ -70,7 +70,7 @@ def get_user_name(from_user) -> str:
         return from_user.username
 
     if from_user.full_name is not None:
-        return from_user.full_name.replace(" ", "_") + from_user.id
+        return from_user.full_name.replace(" ", "_") + str(from_user.id)
 
     return from_user.id
 
