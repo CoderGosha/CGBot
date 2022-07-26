@@ -158,7 +158,7 @@ async def vpn_static(message: types.Message, state: FSMContext):
     vpn_user = DBService.vpn_get_all_users()
     vpn_user_dict = {str(x.vpn_uid): x for x in vpn_user}
     count_stat = 0
-    msg = "Статистика\nТОП 10\n"
+    msg = "Статистика\nТОП 10"
     for key, value in vpn_statistics.items():
         if key in vpn_user_dict:
             vpn = vpn_user_dict[key]

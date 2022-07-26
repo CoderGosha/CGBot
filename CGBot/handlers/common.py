@@ -9,9 +9,8 @@ from CGBot.const import ADMIN_ID
 
 
 def get_main_keyboard(user_id):
-    coffee = emojize(" :coffee:", use_aliases=True)
     b_vpn = KeyboardButton(f"🕵 VPN")
-    b_coffee = KeyboardButton(f"{coffee} Coffee")
+    b_coffee = KeyboardButton(f"☕️ Coffee")
     b_about = KeyboardButton("👨🏼‍💻 About ")
     b_active_request = KeyboardButton(f"🥱 Заявки")
     b_block_vpn = KeyboardButton(f"🧱 Блокировка")
@@ -30,12 +29,11 @@ def get_main_keyboard(user_id):
 
 
 async def cmd_start(message: types.Message, state: FSMContext):
-    coffee = emojize(" :coffee:", use_aliases=True)
     await state.finish()
     keyboard = get_main_keyboard(message.from_user.id)
     await message.answer(
         "Привет, Я помогу Вам получить VPN "
-        "\r\nИ сделаю вам кофе" + coffee
+        "\r\nИ сделаю вам кофе ☕️"
         + "\r\nПодробнее о проектах @CoderGosha"
           "\r\nhttps://codergosha.com/",
         reply_markup=keyboard
