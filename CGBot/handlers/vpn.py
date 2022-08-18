@@ -36,22 +36,13 @@ def get_message_static(user_id) -> str:
         if 'dataLimit' in limit:
             limit_traffic = size(limit['dataLimit']['bytes'])
 
-    available_traffic = "-"
-    if used_traffic is not None and isinstance(limit_traffic, int):
-        available = limit_traffic - used_traffic
-        if available < 0:
-            available = 0
-        available_traffic = size(available)
-    else:
-        available_traffic = limit_traffic
-
     used_traffic_str = '0'
     if used_traffic is not None:
         used_traffic_str = size(used_traffic)
 
     msg = "Ваш VPN: " \
           f"\n\nТрафик за 30 дней:\n {used_traffic_str}" \
-          f"\n\nДоступный трафик:\n {available_traffic} из {limit_traffic}" \
+          f"\n\nЛимит:\n {limit_traffic}" \
           f"\n\nКлюч:\n {vpn.vpn_url}" \
           f"\n\nУстановка:\n {BASE_VPN_INSTALL}{vpn.vpn_url}"
 
