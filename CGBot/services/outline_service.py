@@ -75,3 +75,17 @@ class OutlineService:
     def delete_vpn_user(vpn_uid) -> bool:
         response = requests.delete(f"{OutlineService.api_url}/access-keys/{vpn_uid}", verify=False)
         return response.status_code == 204
+
+    @staticmethod
+    def get_access_keys() -> Optional[dict[int, int]]:
+        response = requests.get(f"{OutlineService.api_url}/access-keys", verify=False)
+        if (
+                response.status_code >= 400
+                or "accessKeys" not in response.json()
+        ):
+            raise Exception("Unable to get metrics")
+
+        data = response.json()
+        if 'accessKeys' not in data:
+            return None
+        return data['accessKeys']

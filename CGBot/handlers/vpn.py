@@ -25,17 +25,33 @@ class VPNStates(StatesGroup):
 def get_message_static(user_id) -> str:
     vpn = DBService.vpn_by_user_id(user_id)
     used_traffic = OutlineService.get_statistics_by_vpn_id(vpn.vpn_uid)
+    access_keys = OutlineService.get_access_keys()
+    limit_traffic = "-"
+
+    limit = next(
+        (limit for limit in access_keys if limit['id'] == vpn.vpn_uid),
+        None,
+    )
+    if limit is not None:
+        if 'dataLimit' in limit:
+            limit_traffic = size(limit['dataLimit']['bytes'])
+
     available_traffic = "-"
-    if used_traffic is not None:
-        available = DEFAULT_TRAFFIC - used_traffic
+    if used_traffic is not None and limit_traffic != '-':
+        available = limit_traffic - used_traffic
         if available < 0:
             available = 0
         available_traffic = size(available)
     else:
-        available_traffic = size(DEFAULT_TRAFFIC)
+        available_traffic = limit_traffic
+
+    used_traffic_str = '0'
+    if used_traffic is not None:
+        used_traffic_str = size(used_traffic)
 
     msg = "Ваш VPN: " \
-          f"\n\nДоступный трафик:\n {available_traffic} из {size(DEFAULT_TRAFFIC)} в месяц" \
+          f"\n\nТрафик за 30 дней:\n {used_traffic_str}" \
+          f"\n\nДоступный трафик:\n {available_traffic} из {limit_traffic}" \
           f"\n\nКлюч:\n {vpn.vpn_url}" \
           f"\n\nУстановка:\n {BASE_VPN_INSTALL}{vpn.vpn_url}"
 
@@ -61,7 +77,7 @@ async def vpn_start(message: types.Message):
     keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
     keyboard.add("Продолжить")
     keyboard.add("Отмена")
-    await message.answer("Ваш запрос будет отправлен на модерацию. Хотите продолжить?:", reply_markup=keyboard)
+    await message.answer("Ваш запрос будет отправлен на модерацию. Хотите продолжить?", reply_markup=keyboard)
     await VPNStates.waiting_for_request.set()
 
 
@@ -155,17 +171,28 @@ async def vpn_static(message: types.Message, state: FSMContext):
         return
 
     vpn_statistics = {k: v for k, v in sorted(vpn_statistics.items(), key=lambda item: item[1], reverse=True)}
+    access_keys = OutlineService.get_access_keys()
     vpn_user = DBService.vpn_get_all_users()
     vpn_user_dict = {str(x.vpn_uid): x for x in vpn_user}
     count_stat = 0
-    msg = "Статистика\nТОП 10"
+    msg = "Статистика\nТОП 20"
     for key, value in vpn_statistics.items():
+        limit_traffic = "-"
+
         if key in vpn_user_dict:
             vpn = vpn_user_dict[key]
+            limit = next(
+                (limit for limit in access_keys if limit['id'] == vpn.vpn_uid),
+                None,
+            )
+            if limit is not None:
+                if 'dataLimit' in limit:
+                    limit_traffic = size(limit['dataLimit']['bytes'])
+
             msg += f"\n{vpn.user_info}" \
-                   f"\n Traffic: {size(value)}"
+                   f"\n Traffic: {size(value)}/{limit_traffic}"
             count_stat += 1
-            if count_stat > 10:
+            if count_stat > 20:
                 continue
     if count_stat > 0:
         await message.answer(msg)
