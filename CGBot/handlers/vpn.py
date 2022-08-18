@@ -37,7 +37,7 @@ def get_message_static(user_id) -> str:
             limit_traffic = size(limit['dataLimit']['bytes'])
 
     available_traffic = "-"
-    if used_traffic is not None and limit_traffic != '-':
+    if used_traffic is not None and isinstance(limit_traffic, int):
         available = limit_traffic - used_traffic
         if available < 0:
             available = 0
