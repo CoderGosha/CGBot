@@ -24,4 +24,4 @@ steps:
     VPN_URL:
       from_secret: VPN_URL
   commands:
-  - docker run -d -v /opt/cgbot/share:/app/share/ --restart=no -m=350m --memory-swap=350m --cpus=".5" --pids-limit=200 -e=VPN_URL=$VPN_URL -e=TELEGRAM_TOKEN=$TELEGRAM_TOKEN --name cgbot cgbot;
+  - docker run -d -v /opt/cgbot/share:/app/share/ --restart=no -m=350m --memory-swap=350m --cpus=".5" --pids-limit=200 -e=TELEGRAM_TOKEN=$TELEGRAM_TOKEN --name cgbot cgbot;

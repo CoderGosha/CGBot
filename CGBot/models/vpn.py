@@ -15,8 +15,8 @@ class VPNUserState(Enum):
 
 class VPN(Base):
     __tablename__ = 'vpn'
-
     vpn_id = Column(Integer, primary_key=True, nullable=False)
+    vpn_config_id = Column(Integer, default=1)
     user_id = Column(Integer)
     user_info = Column(String(150))
     vpn_name = Column(String(30))
