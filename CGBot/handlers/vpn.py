@@ -184,7 +184,7 @@ async def send_request_to_admin(message: types.Message, user_info, vpn_id):
 
     msg = f"Новый запрос на VPN - {vpn.name}" \
           f"\n{user_info}"
-    msg += f"\n\n/vpn_accept_{vpn.vpn_id}"
+    msg += f"\n\n/vpn_accept_{vpn_id}"
     await message.bot.send_message(chat_id=ADMIN_ID, text=msg)
 
 
