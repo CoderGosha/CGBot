@@ -124,7 +124,7 @@ async def vpn_request(message: types.Message, state: FSMContext):
 
     DBService.vpn_request(message.from_user.id, name=get_user_name(message.from_user),
                           user_info=user_info, vpn_config_id=vpn_id)
-    await send_request_to_admin(message, user_info, vpn_id)
+    await send_request_to_admin(message, user_info, vpn_id, message.from_user.id)
     await state.finish()
     await message.answer("Ваш запрос отправлен на модерацию. В ближайшее время вам вышлют данные для подключения",
                          reply_markup=get_main_keyboard(message.from_user.id))
@@ -176,15 +176,17 @@ async def vpn_accept(message: types.Message, state: FSMContext):
     await message.bot.send_message(chat_id=request_vpn.user_id, text=msg)
 
 
-async def send_request_to_admin(message: types.Message, user_info, vpn_id):
+async def send_request_to_admin(message: types.Message, user_info, vpn_id, user_id):
     vpn = VPNService.get_vpn_by_id(vpn_id)
     if vpn is None:
         await message.answer("VPN не найден")
         return
 
+    request_vpn = DBService.vpn_by_user_id(user_id, vpn_id)
+
     msg = f"Новый запрос на VPN - {vpn.name}" \
           f"\n{user_info}"
-    msg += f"\n\n/vpn_accept_{vpn_id}"
+    msg += f"\n\n/vpn_accept_{request_vpn.vpn_id}"
     await message.bot.send_message(chat_id=ADMIN_ID, text=msg)
 
 
