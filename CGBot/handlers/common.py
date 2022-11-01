@@ -49,6 +49,7 @@ async def cmd_donation(message: types.Message, state: FSMContext):
         "VPN всегда будут бесплатными"
         "\r\nНо если вы хотите поддержать автора️"
         + "\r\nYoo Money: \r\n\r\n410015018607209"
+          "\r\n https://yoomoney.ru/to/410015018607209"
           "\r\n\r\nUSDT: \r\n\r\n0xdb3981D304e6Dc39246e215958E0ea22D8417b60",
         reply_markup=keyboard
     )
