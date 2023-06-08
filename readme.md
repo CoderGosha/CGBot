@@ -1,4 +1,7 @@
 # CoderGosha Bot
+### t.me/CoderGoshaBot
+
+Телеграм бот для получения VPN и демонстрации проектов
 ```
 set "TELEGRAM_TOKEN=token"
 set "VPN_URL=token"
