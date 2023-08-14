@@ -1,4 +1,4 @@
-FROM python AS runtime
+FROM python:3.8-slim-bullseye AS runtime
 WORKDIR /app
 COPY . .
 
