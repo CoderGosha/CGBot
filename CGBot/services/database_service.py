@@ -95,7 +95,7 @@ class DBService:
 
     @staticmethod
     def migration():
-        if not DBService._table_has_column("vpn", "vpn_config_id"):
+        if not DBService._table_has_column("vpn", "vpn_config_id") and DBService._has_table("vpn"):
             column = Column('vpn_config_id', Integer)
             DBService.add_column(DBService.engine, "vpn", column, default=1)
 
@@ -126,3 +126,13 @@ class DBService:
             return None
 
         return result
+
+    @classmethod
+    def _has_table(cls, table):
+        engine = DBService.engine
+        insp = reflection.Inspector.from_engine(engine)
+
+        if len(insp.get_columns(table)) == 0:
+            return False
+        return True
+
