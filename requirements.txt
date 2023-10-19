@@ -1,6 +1,6 @@
 aiogram==2.25.2
 emoji
-sqlalchemy
+sqlalchemy==1.4.37
 requests
 hurry-filesize
 alembic
