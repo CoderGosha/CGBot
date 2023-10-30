@@ -4,6 +4,7 @@ from aiogram import Dispatcher, types, Bot
 from aiogram.dispatcher import FSMContext, filters
 from aiogram.dispatcher.filters import Text
 from aiogram.dispatcher.filters.state import StatesGroup, State
+from aiogram.types import ParseMode
 
 from CGBot.const import ADMIN_ID, BASE_VPN_INSTALL, DEFAULT_TRAFFIC
 from CGBot.handlers.common import cmd_cancel, get_main_keyboard
@@ -16,6 +17,7 @@ from CGBot.services.vpn_service import VPNService
 
 
 class VPNStates(StatesGroup):
+    vpn_type_chosen = State()
     vpn_chosen = State()
     waiting_for_request = State()
     block_choice_type = State()
@@ -26,6 +28,25 @@ class VPNStates(StatesGroup):
 
 
 def get_message_static(user_id, vpn_service: OutlineService) -> str:
+    if vpn_service.vpn_type == "Outline":
+        return get_message_static_outline(user_id, vpn_service)
+
+    else:
+        return get_static_trojan(user_id, vpn_service)
+
+
+def get_static_trojan(user_id, vpn_service: OutlineService) -> str:
+    vpn = DBService.vpn_by_user_id(user_id, vpn_service.vpn_id)
+    msg = f"Ваш VPN - {vpn_service.name}: " \
+          f"Скопируйте ваш ключ и вставьте в приложение из App Store" \
+          f"\n\nКлюч:\n<pre><code>{vpn.vpn_url}</code></pre>" \
+          f"\n\nПриложение:\n https://apps.apple.com/ru/app/streisand/id6450534064?l=en-GB"
+
+    return msg
+
+
+def get_message_static_outline(user_id, vpn_service: OutlineService) -> str:
+
     vpn = DBService.vpn_by_user_id(user_id, vpn_service.vpn_id)
     used_traffic = vpn_service.get_statistics_by_vpn_id(vpn.vpn_uid)
     access_keys = vpn_service.get_access_keys()
@@ -52,13 +73,33 @@ def get_message_static(user_id, vpn_service: OutlineService) -> str:
     return msg
 
 
-async def vpn_choice(message: types.Message):
+async def vpn_type_choice(message: types.Message):
+    keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    for vpn in VPNService.get_type_vpns():
+        keyboard.add(vpn)
+
+    keyboard.add("Отмена")
+    await message.answer("Выберите тип VPN", reply_markup=keyboard)
+    await VPNStates.vpn_type_chosen.set()
+
+
+async def vpn_outline_choice(message: types.Message):
     keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
     for vpn in VPNService.get_vpns():
         keyboard.add(vpn.name)
 
     keyboard.add("Отмена")
-    await message.answer("Выберите VPN", reply_markup=keyboard)
+    await message.answer("Выберите страну VPN", reply_markup=keyboard)
+    await VPNStates.vpn_chosen.set()
+
+
+async def vpn_trojan_choice(message: types.Message):
+    keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    for vpn in VPNService.get_trojan_vpns():
+        keyboard.add(vpn.name)
+
+    keyboard.add("Отмена")
+    await message.answer("Выберите страну VPN", reply_markup=keyboard)
     await VPNStates.vpn_chosen.set()
 
 
@@ -82,7 +123,7 @@ async def vpn_start(message: types.Message, state: FSMContext):
 
     if state_request == VPNUserState.Ready:
         msg = get_message_static(message.from_user.id, vpn)
-        await message.answer(msg)
+        await message.answer(msg, parse_mode=ParseMode.HTML)
         # await state.finish()
         return
 
@@ -173,7 +214,7 @@ async def vpn_accept(message: types.Message, state: FSMContext):
     msg = get_message_static(user_id=request_vpn.user_id, vpn_service=vpn)
 
     await message.bot.send_message(chat_id=ADMIN_ID, text="Ready")
-    await message.bot.send_message(chat_id=request_vpn.user_id, text=msg)
+    await message.bot.send_message(chat_id=request_vpn.user_id, text=msg, parse_mode=ParseMode.HTML)
 
 
 async def send_request_to_admin(message: types.Message, user_info, vpn_id, user_id):
@@ -184,7 +225,7 @@ async def send_request_to_admin(message: types.Message, user_info, vpn_id, user_
 
     request_vpn = DBService.vpn_by_user_id(user_id, vpn_id)
 
-    msg = f"Новый запрос на VPN - {vpn.name}" \
+    msg = f"Новый запрос на VPN: {vpn.vpn_type} - {vpn.name}" \
           f"\n{user_info}"
     msg += f"\n\n/vpn_accept_{request_vpn.vpn_id}"
     await message.bot.send_message(chat_id=ADMIN_ID, text=msg)
@@ -195,7 +236,7 @@ async def vpn_static(message: types.Message, state: FSMContext):
         return
 
     await state.finish()
-    vpn_services = VPNService.vpn_services
+    vpn_services = VPNService.vpn_outline_services
     if len(vpn_services) == 0:
         await message.answer("Нет доступной статистики")
 
@@ -239,7 +280,7 @@ async def block_list_user(message: types.Message, state: FSMContext):
     if message.from_user.id != ADMIN_ID:
         return
 
-    vpn_services = VPNService.vpn_services
+    vpn_services = VPNService.vpn_outline_services
     for vpn_service in vpn_services:
         vpn_user = DBService.vpn_get_all_users(vpn_service.vpn_id)
         if vpn_user is None or vpn_user is []:
@@ -298,8 +339,12 @@ async def vpn_delete(message: types.Message, state: FSMContext):
 
 
 def register_handlers_vpn(dp: Dispatcher):
-    dp.register_message_handler(vpn_choice, commands="vpn", state="*")
-    dp.register_message_handler(vpn_choice, Text(endswith="vpn", ignore_case=True), state="*")
+    dp.register_message_handler(vpn_type_choice, commands="vpn", state="*")
+    dp.register_message_handler(vpn_type_choice, Text(endswith="VPN", ignore_case=True), state="*")
+    dp.register_message_handler(vpn_outline_choice, Text(startswith="Outline", ignore_case=True),
+                                state=VPNStates.vpn_type_chosen)
+    dp.register_message_handler(vpn_trojan_choice, Text(startswith="Trojan", ignore_case=True),
+                                state=VPNStates.vpn_type_chosen)
     dp.register_message_handler(vpn_request, Text(equals="продолжить", ignore_case=True),
                                 state=VPNStates.waiting_for_request)
     dp.register_message_handler(vpn_start, state=VPNStates.vpn_chosen)

@@ -8,10 +8,11 @@ from CGBot.const import DEFAULT_TRAFFIC
 
 
 class OutlineService:
-    def __init__(self, vpn_id, api_url, name):
+    def __init__(self, vpn_id, api_url, name, vpn_type):
         self.vpn_id = vpn_id
         self.name = name
         self.api_url = api_url
+        self.vpn_type = vpn_type
 
     def create_vpn_user(self, name: str) -> (str, str):
         id, url = None, None
