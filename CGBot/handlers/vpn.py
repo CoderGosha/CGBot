@@ -40,7 +40,7 @@ def get_static_trojan(user_id, vpn_service: OutlineService) -> str:
     msg = f"Ваш VPN - {vpn_service.name}: " \
           f"Скопируйте ваш ключ и вставьте в приложение из App Store" \
           f"\n\nКлюч:\n<pre><code>{vpn.vpn_url}</code></pre>" \
-          f"\n\nПриложение:\n https://apps.apple.com/ru/app/streisand/id6450534064?l=en-GB"
+          f"\n\nПриложение:\n https://apps.apple.com/ru/app/spectre-vpn/id1508712998?l=en-GB"
 
     return msg
 
