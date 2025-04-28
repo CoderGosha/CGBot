@@ -39,10 +39,13 @@ def get_static_trojan(user_id, vpn_service: OutlineService) -> str:
     vpn = DBService.vpn_by_user_id(user_id, vpn_service.vpn_id)
     vpn_url = VPNService.get_vpn_by_id(vpn_service.vpn_id)
 
-    msg = f'Ваш VPN - {vpn_service.name}: ' \
-          f'\n\nПерейдите по ссылке и следуйте инструкциям' \
-          f'\n\nURL:\n<a href="{vpn_url.api_url}">' + vpn_url.api_url + ' </a>'
-
+    msg = (
+        f'Ваш VPN - {vpn_service.name}:\n\n'
+        f'Ваш ключ:\n\n'
+        f'Android/MacOS: <a href="https://github.com/hiddify/hiddify-app/releases">Скачать приложение</a>\n\n'
+        f'Iphone: Streisand\n\n'
+        f'URL:\n<code>{vpn_url.api_url}</code>'
+    )
     return msg
 
 
